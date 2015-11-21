@@ -7,6 +7,7 @@ Created on Sat Nov 21 16:38:10 2015
 import os
 from PyPDF2 import PdfFileReader
 import re
+import isbnlib
 
 def scan_pdf_files_in_folder(x):
     """Scan for pdf files."""
@@ -24,7 +25,7 @@ def scan_pdf_files_in_folder(x):
     else:
         raise Exception(str(x, 'is neither a file nor folder.'))
 
-def get_metadata(x):
+def get_metadata_from_file(x):
     """Get metadata for file x.
     Returns a tuple (author, title)"""
     pdf_file = open(x, 'rb')
@@ -62,3 +63,45 @@ def work_on_title(x):
     # removes the _ at the end of string
     x = re.sub('_\Z', '', x)
     return(x.lower())
+
+def process_raw_isbn(x):
+    """Check if it is a ISBN"""
+    for i in range(len(x)):
+        if isbnlib.is_isbn10(x[i:i+10]):
+            return x[i:i+10]
+        elif isbnlib.is_isbn13(x[i:i+13]):
+            return x[i:i+13]
+    return None
+    
+def get_isbn_from_file(x):
+    """Gets the isbn from file."""
+    pdf_file = open(x, 'rb')
+    try:
+        pdfobj = PdfFileReader(pdf_file)
+        isbn_general = re.compile('[Ii][Ss][Bb][Nn].{13,100}', re.DOTALL)
+        isbn10 = re.compile('')
+        isbn13 = re.compile('')
+        for i in range(10):
+            pageobj = pdfobj.getPage(i)
+            general_match = re.search(isbn_general, pageobj.extractText())
+            if general_match:
+                only_numbers = re.sub('[^0-9]', '', general_match.group(0))
+                valid_isbn = process_raw_isbn(only_numbers)
+                if valid_isbn:
+                    return valid_isbn
+    except:
+        pass
+    return None
+                
+def get_metadata_from_valid_isbn(isbn):
+    """ """
+    try:
+        metadata = isbnlib.meta(isbn, 'merge')
+        authors_string = ''
+        for author in metadata(['Authors']):
+            authors_string += authors_string + ' '
+        return (authors_string[:-1], metadata['Title'])
+    except:
+        return None
+            
+    return None
