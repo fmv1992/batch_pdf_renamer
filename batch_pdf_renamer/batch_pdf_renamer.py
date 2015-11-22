@@ -79,8 +79,6 @@ def get_isbn_from_file(x):
     try:
         pdfobj = PdfFileReader(pdf_file)
         isbn_general = re.compile('[Ii][Ss][Bb][Nn].{13,100}', re.DOTALL)
-        isbn10 = re.compile('')
-        isbn13 = re.compile('')
         for i in range(10):
             pageobj = pdfobj.getPage(i)
             general_match = re.search(isbn_general, pageobj.extractText())
@@ -95,13 +93,30 @@ def get_isbn_from_file(x):
                 
 def get_metadata_from_valid_isbn(isbn):
     """ """
-    try:
-        metadata = isbnlib.meta(isbn, 'merge')
-        authors_string = ''
-        for author in metadata(['Authors']):
-            authors_string += authors_string + ' '
-        return (authors_string[:-1], metadata['Title'])
-    except:
+    metadata = None
+    servers = ('wcat', 'goob', 'openl', 'merge')
+    for server in servers:
+        try:
+            metadata = isbnlib.meta(isbn, server)
+            if metadata is not None:
+                break
+        except:
+            pass
+    else:
         return None
-            
+    authors_string = ''
+    for author in metadata['Authors']:
+        authors_string += author + ' '
+    return (authors_string[:-1], metadata['Title'])
+    
+def do_rename(src, dst, safelogfile):
+    """Do the rename and add the name to the logfile."""
+    unix_command = 'mv \'' + \
+                   os.path.dirname(src) + '/' + dst + '\' \'' + \
+                   src + '\'\n' 
+    full_source_name = src
+    full_dest_name = os.path.dirname(src) + '/' + dst
+    if full_source_name != full_dest_name:
+        safelogfile.write(unix_command)
+        os.rename(full_source_name, full_dest_name)
     return None
