@@ -2,12 +2,16 @@
 """
 Created on Sat Nov 21 16:38:10 2015
 
-@author: monteiro
+@author: Felipe M. Vieira <fmv1992@gmail.com>
+
+Description:
+helper functions to main program
 """
 import os
 from PyPDF2 import PdfFileReader
 import re
 import isbnlib
+import logging
 
 def scan_pdf_files_in_folder(x):
     """Scan for pdf files."""
@@ -78,10 +82,12 @@ def get_isbn_from_file(x):
     pdf_file = open(x, 'rb')
     try:
         pdfobj = PdfFileReader(pdf_file)
-        isbn_general = re.compile('[Ii][Ss][Bb][Nn].{13,100}', re.DOTALL)
+        isbn_general = re.compile('(isbn|standard.{0,5}book).{13,100}',
+                                  re.DOTALL)
         for i in range(10):
             pageobj = pdfobj.getPage(i)
-            general_match = re.search(isbn_general, pageobj.extractText())
+            general_match = re.search(isbn_general,
+                                      pageobj.extractText().lower())
             if general_match:
                 only_numbers = re.sub('[^0-9]', '', general_match.group(0))
                 valid_isbn = process_raw_isbn(only_numbers)
@@ -109,7 +115,7 @@ def get_metadata_from_valid_isbn(isbn):
         authors_string += author + ' '
     return (authors_string[:-1], metadata['Title'])
     
-def do_rename(src, dst, safelogfile):
+def do_rename(src, dst, safelogfile=None, dry_run=False):
     """Do the rename and add the name to the logfile."""
     unix_command = 'mv \'' + \
                    os.path.dirname(src) + '/' + dst + '\' \'' + \
@@ -117,6 +123,10 @@ def do_rename(src, dst, safelogfile):
     full_source_name = src
     full_dest_name = os.path.dirname(src) + '/' + dst
     if full_source_name != full_dest_name:
-        safelogfile.write(unix_command)
-        os.rename(full_source_name, full_dest_name)
+        if dry_run is False:
+            os.rename(full_source_name, full_dest_name)
+            if safelogfile:
+                safelogfile.write(unix_command)
+        logging.info('%s -> %s', os.path.basename(full_source_name),
+                     os.path.basename(full_dest_name))
     return None

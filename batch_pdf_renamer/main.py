@@ -2,9 +2,11 @@
 """
 Created on 21 nov 2015
 
-@author: monteiro
+@author: Felipe M. Vieira <fmv1992@gmail.com>
 
 Description:
+
+main code
 """
 # imports
 import logging
@@ -31,24 +33,28 @@ parser.add_argument('--use-metadata', help='uses metadata embedded on pdf file\
                                            for renaming',
                     action="store_true", default=False, required=False)
 args = parser.parse_args()
-
 # logging
 if args.verbose is True:
     logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s',
                         level=logging.INFO, datefmt='%Y/%m/%d %H:%M:%S')
-    # sample log                        
-logging.info('File %s already exists. Skipping.', 'string')
+# sample log                        
+# logging.info('File %s already exists. Skipping.', 'string')
 if args.use_metadata is True:
-    print('Using pdf metadata')
+    logging.info('Using pdf metadata.')
+else:
+    logging.info('Not using pdf metadata. ISBN queries only.')
 # safety file for undoing                        
 if not os.path.isfile(args.restore_file):
     raise Exception(str(args.restore_file + ' does not exist yet.'))
-else:
+if args.dry_run is False:
     safe_log_file = open(str(os.path.dirname(os.path.dirname(
                          os.path.abspath(__file__))) +
                          '/' + 'restorelog.txt'),
                          'at')
     safe_log_file.write(str(dt.now()) + '\n')
+else:
+    logging.info('This is a dry run.')
+    safe_log_file = None
 
 # scan for pdfs
 all_pdf_paths = scan_pdf_files_in_folder(args.input)
@@ -62,10 +68,11 @@ for each_pdf in all_pdf_paths:
             new_filename = work_on_title(metadata[0]) + '_-_' + \
                                work_on_author(metadata[1]) + '.pdf'
             #print(str(os.path.basename((each_pdf)) + ' -> ' + new_filename + '\n'))
-            do_rename(each_pdf, new_filename, safe_log_file)
+            do_rename(each_pdf, new_filename, safe_log_file, args.dry_run)
             continue
     else:
-        print('could not get a valid isbn for', os.path.basename(each_pdf))
+        logging.info('Could not get a valid isbn for %s .',
+                     os.path.basename(each_pdf))
     # get metadata from file
     if args.use_metadata is False:
         continue
@@ -80,7 +87,8 @@ for each_pdf in all_pdf_paths:
             new_filename = work_on_title(metadata[0]) + '_-_' + \
                            work_on_author(metadata[1]) + '.pdf'
             #print(str(os.path.basename((each_pdf)) + ' -> ' + new_filename + '\n'))
-            do_rename(each_pdf, new_filename, safe_log_file)
+            do_rename(each_pdf, new_filename, safe_log_file, args.dry_run)
     except:
         pass
-safe_log_file.close()
+if safe_log_file:
+    safe_log_file.close()
