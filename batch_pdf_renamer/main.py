@@ -11,10 +11,11 @@ main code
 # imports
 import logging
 import argparse
+# TODO fix this import heresy '*'
 from batch_pdf_renamer import *  # the module uses all functions
 from datetime import datetime as dt  # for logging on the restore-file
 
-# parsing
+# Parsing
 parser = argparse.ArgumentParser()
 parser.add_argument('--verbose', help='puts the program in verbose mode',
                     action="store_true", default=False)
@@ -33,23 +34,23 @@ parser.add_argument('--use-metadata', help='uses metadata embedded on pdf file\
                                            for renaming',
                     action="store_true", default=False, required=False)
 args = parser.parse_args()
-# logging
+# Logging
 if args.verbose is True:
     logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s',
                         level=logging.INFO, datefmt='%Y/%m/%d %H:%M:%S')
-# sample log                        
+# Sample log
 # logging.info('File %s already exists. Skipping.', 'string')
 if args.use_metadata is True:
     logging.info('Using pdf metadata.')
 else:
     logging.info('Not using pdf metadata. ISBN queries only.')
-# safety file for undoing                        
+# Safety file for undoing
 if not os.path.isfile(args.restore_file):
     raise Exception(str(args.restore_file + ' does not exist yet.'))
 if args.dry_run is False:
     safe_log_file = open(str(os.path.dirname(os.path.dirname(
-                         os.path.abspath(__file__))) +
-                         '/' + 'restorelog.txt'),
+                             os.path.abspath(__file__)))
+                         + '/' + 'restorelog.txt'),
                          'at')
     safe_log_file.write(str(dt.now()) + '\n')
 else:
@@ -65,9 +66,8 @@ for each_pdf in all_pdf_paths:
     if valid_isbn:
         metadata = get_metadata_from_valid_isbn(valid_isbn)
         if metadata:
-            new_filename = work_on_title(metadata[0]) + '_-_' + \
-                               work_on_author(metadata[1]) + '.pdf'
-            #print(str(os.path.basename((each_pdf)) + ' -> ' + new_filename + '\n'))
+            new_filename = work_on_title(metadata[0]) + '_-_' \
+                + work_on_author(metadata[1]) + '.pdf'
             do_rename(each_pdf, new_filename, safe_log_file, args.dry_run)
             continue
     else:
@@ -84,9 +84,8 @@ for each_pdf in all_pdf_paths:
             pass
         else:
             # do the renaming
-            new_filename = work_on_title(metadata[0]) + '_-_' + \
-                           work_on_author(metadata[1]) + '.pdf'
-            #print(str(os.path.basename((each_pdf)) + ' -> ' + new_filename + '\n'))
+            new_filename = work_on_title(metadata[0]) + '_-_' \
+                + work_on_author(metadata[1]) + '.pdf'
             do_rename(each_pdf, new_filename, safe_log_file, args.dry_run)
     except:
         pass

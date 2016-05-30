@@ -8,10 +8,11 @@ Description:
 helper functions to main program
 """
 import os
-from PyPDF2 import PdfFileReader
 import re
-import isbnlib
 import logging
+from PyPDF2 import PdfFileReader
+import isbnlib
+
 
 def scan_pdf_files_in_folder(x):
     """Scan for pdf files."""
@@ -22,12 +23,13 @@ def scan_pdf_files_in_folder(x):
     elif os.path.isdir(x):
         list_of_pdfs = []
         for (rootpath, subdir, filenames) in os.walk(x):
-            for file in filenames:            
+            for file in filenames:
                 if '.pdf' in file:
                     list_of_pdfs.append(rootpath + '/' + file)
         return list_of_pdfs
     else:
         raise Exception(str(x, 'is neither a file nor folder.'))
+
 
 def get_metadata_from_file(x):
     """Get metadata for file x.
@@ -44,10 +46,11 @@ def get_metadata_from_file(x):
         title = dictinfo['/Title']
     except:
         title = None
-    
+
     pdf_file.close()
     return (author, title)
-    
+
+
 def work_on_author(x):
     """Manipulates the author string."""
     # allow only a small subset of common characters
@@ -57,6 +60,7 @@ def work_on_author(x):
     # removes the _ at the end of string
     x = re.sub('_\Z', '', x)
     return(x.lower())
+
 
 def work_on_title(x):
     """Manipulates the title string."""
@@ -68,6 +72,7 @@ def work_on_title(x):
     x = re.sub('_\Z', '', x)
     return(x.lower())
 
+
 def process_raw_isbn(x):
     """Check if it is a ISBN"""
     for i in range(len(x)):
@@ -76,7 +81,8 @@ def process_raw_isbn(x):
         elif isbnlib.is_isbn13(x[i:i+13]):
             return x[i:i+13]
     return None
-    
+
+
 def get_isbn_from_file(x):
     """Gets the isbn from file."""
     pdf_file = open(x, 'rb')
@@ -96,7 +102,8 @@ def get_isbn_from_file(x):
     except:
         pass
     return None
-                
+
+
 def get_metadata_from_valid_isbn(isbn):
     """ """
     metadata = None
@@ -114,12 +121,13 @@ def get_metadata_from_valid_isbn(isbn):
     for author in metadata['Authors']:
         authors_string += author + ' '
     return (authors_string[:-1], metadata['Title'])
-    
+
+
 def do_rename(src, dst, safelogfile=None, dry_run=False):
     """Do the rename and add the name to the logfile."""
     unix_command = 'mv \'' + \
                    os.path.dirname(src) + '/' + dst + '\' \'' + \
-                   src + '\'\n' 
+                   src + '\'\n'
     full_source_name = src
     full_dest_name = os.path.dirname(src) + '/' + dst
     if full_source_name != full_dest_name:
