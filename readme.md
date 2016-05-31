@@ -23,3 +23,6 @@ You can also try a dry-run before actually using it (argument --dry-run).
 *PyPDF2* is used to get the text from the first 10 pages of your pdf.
 
 *isbnlib* is used to query the ISBN number found (if any).
+
+## TODO
+- remove the `import *` statement
